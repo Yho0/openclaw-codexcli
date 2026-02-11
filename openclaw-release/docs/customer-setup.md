@@ -15,6 +15,7 @@
 - `openclaw-release/scripts/bootstrap-openclaw-macos.sh`
 - `openclaw-release/scripts/bootstrap-openclaw-linux.sh`
 - `openclaw-release/templates/openclaw.defaults.json`
+- `openclaw-release/docs/customer-message-template.md`
 
 ## 推荐的后端发放方式
 
@@ -100,4 +101,3 @@ openclaw gateway start
 ### 4) macOS `uv_cwd` 错误
 
 在一个真实存在的目录里执行（例如先 `cd ~`），不要在已删除目录内运行命令。
-
