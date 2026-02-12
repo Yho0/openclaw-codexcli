@@ -4,14 +4,26 @@ set -euo pipefail
 cd "$HOME"
 
 if ! command -v openclaw >/dev/null 2>&1; then
-  echo "未检测到 openclaw，请先安装后再运行此脚本。"
+  echo "openclaw was not found. Install openclaw first."
   exit 1
 fi
 
 if ! command -v node >/dev/null 2>&1; then
-  echo "未检测到 node，请先安装 Node.js 18+。"
+  echo "node was not found. Install Node.js 18+ first."
   exit 1
 fi
+
+prompt_secret() {
+  local prompt="$1"
+  local value=""
+  if [[ -r /dev/tty ]]; then
+    read -r -s -p "$prompt" value </dev/tty
+    echo >/dev/tty
+  else
+    return 1
+  fi
+  printf '%s' "$value"
+}
 
 primary_provider="${OPENCLAW_PRIMARY_PROVIDER:-primary}"
 primary_base_url="${OPENCLAW_PRIMARY_BASE_URL:-https://www.aistock.tech/v1}"
@@ -27,18 +39,22 @@ primary_api_key="${OPENCLAW_PRIMARY_API_KEY:-}"
 backup_api_key="${OPENCLAW_BACKUP_API_KEY:-}"
 
 if [[ -z "$primary_api_key" ]]; then
-  read -rsp "请输入主线路 API Key: " primary_api_key
-  echo
+  if ! primary_api_key="$(prompt_secret "Enter primary API key: ")"; then
+    echo "Primary API key is required. Run interactively or set OPENCLAW_PRIMARY_API_KEY."
+    exit 1
+  fi
 fi
 
 if [[ -z "$primary_api_key" ]]; then
-  echo "主线路 API Key 不能为空。"
+  echo "Primary API key cannot be empty."
   exit 1
 fi
 
 if [[ -z "$backup_api_key" ]]; then
-  read -rsp "请输入备用线路 API Key（可回车复用主线路）: " backup_api_key
-  echo
+  backup_input=""
+  if backup_input="$(prompt_secret "Enter backup API key (press Enter to reuse primary): ")"; then
+    backup_api_key="$backup_input"
+  fi
 fi
 
 if [[ -z "$backup_api_key" ]]; then
@@ -129,10 +145,10 @@ config.agents.defaults.model = config.agents.defaults.model || {};
 config.agents.defaults.model.primary = `${primaryProvider}/${primaryModel}`;
 
 fs.writeFileSync(configFile, JSON.stringify(config, null, 2) + "\n");
-' 
+'
 
 node -e 'JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"));' "$config_file"
-echo "openclaw.json 写入成功: $config_file"
+echo "openclaw.json written: $config_file"
 
 if ! openclaw gateway restart >/dev/null 2>&1; then
   openclaw gateway install >/dev/null 2>&1 || true
@@ -142,7 +158,7 @@ fi
 health_check() {
   local result_file
   result_file="$(mktemp)"
-  if openclaw agent --agent main --message "请只回复OK" --json >"$result_file" 2>&1; then
+  if openclaw agent --agent main --message "Please reply OK only" --json >"$result_file" 2>&1; then
     if grep -qi '"OK"' "$result_file" || grep -qi 'OK' "$result_file"; then
       rm -f "$result_file"
       return 0
@@ -154,11 +170,11 @@ health_check() {
 }
 
 if health_check; then
-  echo "健康检查通过，当前模型: ${primary_provider}/${primary_model}"
+  echo "Health check passed on ${primary_provider}/${primary_model}"
   exit 0
 fi
 
-echo "主线路失败，自动切换备用线路..."
+echo "Primary failed, switching to backup provider..."
 OPENCLAW_CONFIG_FILE="$config_file" \
 OPENCLAW_BACKUP_PROVIDER="$backup_provider" \
 OPENCLAW_BACKUP_MODEL="$backup_model" \
@@ -176,9 +192,9 @@ fs.writeFileSync(file, JSON.stringify(data, null, 2) + "\n");
 '
 
 if health_check; then
-  echo "备用线路可用，当前模型: ${backup_provider}/${backup_model}"
+  echo "Health check passed on ${backup_provider}/${backup_model}"
   exit 0
 fi
 
-echo "主备线路均未通过健康检查，请检查 URL / API Key / 上游网关状态。"
+echo "Both primary and backup providers failed health checks."
 exit 1
