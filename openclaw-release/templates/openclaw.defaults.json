@@ -1,9 +1,9 @@
 {
   "models": {
     "providers": {
-      "primary": {
+      "Aistock": {
         "baseUrl": "https://www.aistock.tech/v1",
-        "apiKey": "${PRIMARY_API_KEY}",
+        "apiKey": "${AISTOCK_API_KEY}",
         "api": "openai-responses",
         "headers": {
           "User-Agent": "codex_cli_rs/0.98.0",
@@ -15,49 +15,7 @@
         "models": [
           {
             "id": "gpt-5.3-codex",
-            "name": "gpt-5.3-codex",
-            "reasoning": false,
-            "input": [
-              "text"
-            ],
-            "cost": {
-              "input": 0,
-              "output": 0,
-              "cacheRead": 0,
-              "cacheWrite": 0
-            },
-            "contextWindow": 200000,
-            "maxTokens": 8192
-          }
-        ]
-      },
-      "backup": {
-        "baseUrl": "https://cdn.12ai.org/v1",
-        "apiKey": "${BACKUP_API_KEY}",
-        "api": "openai-completions",
-        "headers": {
-          "User-Agent": "codex_cli_rs/0.98.0",
-          "x-stainless-lang": "rust",
-          "x-stainless-runtime": "rust",
-          "x-stainless-runtime-version": "0.98.0",
-          "x-stainless-package-version": "0.98.0"
-        },
-        "models": [
-          {
-            "id": "gpt-5.3-codex",
-            "name": "gpt-5.3-codex",
-            "reasoning": false,
-            "input": [
-              "text"
-            ],
-            "cost": {
-              "input": 0,
-              "output": 0,
-              "cacheRead": 0,
-              "cacheWrite": 0
-            },
-            "contextWindow": 200000,
-            "maxTokens": 8192
+            "name": "gpt-5.3-codex"
           }
         ]
       }
@@ -66,7 +24,7 @@
   "agents": {
     "defaults": {
       "model": {
-        "primary": "primary/gpt-5.3-codex"
+        "primary": "Aistock/gpt-5.3-codex"
       }
     }
   }
